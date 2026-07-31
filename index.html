@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grand Livre — suivi de budget</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F1F5EE;
+    --surface: #FBFDF9;
+    --surface-alt: #EAF0E6;
+    --ink-primary: #12190F;
+    --ink-secondary: #4B5A46;
+    --ink-muted: #7C8878;
+    --gridline: #DCE6D8;
+    --baseline: #B9C7B4;
+    --border: rgba(18, 25, 15, 0.12);
+    --shadow: rgba(18, 25, 15, 0.08);
+    --accent: #B5811C;
+    --btn-bg: #8F6712;
+    --btn-bg-hover: #74530E;
+    --btn-text: #FBFDF9;
+    --income: #0ca30c;
+    --income-text: #006300;
+    --expense: #d03b3b;
+    --expense-text: #b53030;
+    --cat-logement: #2a78d6;
+    --cat-transport: #eb6834;
+    --cat-sante: #1baf7a;
+    --cat-shopping: #eda100;
+    --cat-loisirs: #e87ba4;
+    --cat-alimentation: #008300;
+    --cat-autres: #4a3aa7;
+
+    --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --bg: #10160D;
+      --surface: #1A2117;
+      --surface-alt: #212B1D;
+      --ink-primary: #F5F8F2;
+      --ink-secondary: #C9D2C2;
+      --ink-muted: #8C9786;
+      --gridline: #2A342A;
+      --baseline: #3C4A38;
+      --border: rgba(255, 255, 255, 0.12);
+      --shadow: rgba(0, 0, 0, 0.4);
+      --accent: #D9A23F;
+      --btn-bg: #D9A23F;
+      --btn-bg-hover: #F0B855;
+      --btn-text: #10160D;
+      --income: #0ca30c;
+      --income-text: #3fc23f;
+      --expense: #d03b3b;
+      --expense-text: #e66767;
+      --cat-logement: #3987e5;
+      --cat-transport: #d95926;
+      --cat-sante: #199e70;
+      --cat-shopping: #c98500;
+      --cat-loisirs: #d55181;
+      --cat-alimentation: #008300;
+      --cat-autres: #9085e9;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #10160D; --surface: #1A2117; --surface-alt: #212B1D;
+    --ink-primary: #F5F8F2; --ink-secondary: #C9D2C2; --ink-muted: #8C9786;
+    --gridline: #2A342A; --baseline: #3C4A38; --border: rgba(255, 255, 255, 0.12);
+    --shadow: rgba(0, 0, 0, 0.4);
+    --accent: #D9A23F; --btn-bg: #D9A23F; --btn-bg-hover: #F0B855; --btn-text: #10160D;
+    --income: #0ca30c; --income-text: #3fc23f; --expense: #d03b3b; --expense-text: #e66767;
+    --cat-logement: #3987e5; --cat-transport: #d95926; --cat-sante: #199e70;
+    --cat-shopping: #c98500; --cat-loisirs: #d55181; --cat-alimentation: #008300; --cat-autres: #9085e9;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #F1F5EE; --surface: #FBFDF9; --surface-alt: #EAF0E6;
+    --ink-primary: #12190F; --ink-secondary: #4B5A46; --ink-muted: #7C8878;
+    --gridline: #DCE6D8; --baseline: #B9C7B4; --border: rgba(18, 25, 15, 0.12);
+    --shadow: rgba(18, 25, 15, 0.08);
+    --accent: #B5811C; --btn-bg: #8F6712; --btn-bg-hover: #74530E; --btn-text: #FBFDF9;
+    --income: #0ca30c; --income-text: #006300; --expense: #d03b3b; --expense-text: #b53030;
+    --cat-logement: #2a78d6; --cat-transport: #eb6834; --cat-sante: #1baf7a;
+    --cat-shopping: #eda100; --cat-loisirs: #e87ba4; --cat-alimentation: #008300; --cat-autres: #4a3aa7;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink-primary);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 35px,
+      var(--gridline) 35px,
+      var(--gridline) 36px
+    );
+    opacity: 0.35;
+    z-index: 0;
+  }
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  a { color: var(--accent); }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    position: relative;
+    padding-left: 24px;
+    border-left: 3px solid var(--expense);
+  }
+  .eyebrow {
+    margin: 0 0 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  h1.title {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(34px, 5vw, 52px);
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .tagline {
+    margin: 0;
+    max-width: 52ch;
+    color: var(--ink-secondary);
+    font-size: 16px;
+    font-style: italic;
+    font-family: var(--font-display);
+  }
+
+  /* ---------- Stats ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 2px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 700;
+  }
+  .stat-tile[data-role="income"] .stat-value { color: var(--income-text); }
+  .stat-tile[data-role="expense"] .stat-value { color: var(--expense-text); }
+  .stat-tile[data-role="balance"] .stat-value.positive { color: var(--income-text); }
+  .stat-tile[data-role="balance"] .stat-value.negative { color: var(--expense-text); }
+  .stat-caption {
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+
+  /* ---------- Controls ---------- */
+  .controls {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .period-filter {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .period-filter button {
+    font-family: var(--font-body);
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    color: var(--ink-secondary);
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .period-filter button.active {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+  }
+  .period-filter button:hover:not(.active) {
+    background: var(--surface-alt);
+  }
+  .controls .note {
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+
+  /* ---------- Charts ---------- */
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .chart-card.chart-line { grid-column: 1 / -1; }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px 16px;
+    box-shadow: 0 1px 2px var(--shadow);
+    min-width: 0;
+  }
+  .chart-card h2, .ledger h2 {
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .chart-sub {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .chart-empty {
+    color: var(--ink-muted);
+    font-size: 13px;
+    font-style: italic;
+    padding: 30px 0;
+    text-align: center;
+  }
+  .chart-card svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart-card svg text { font-family: var(--font-mono); }
+  .axis-label { fill: var(--ink-muted); }
+
+  .cat-logement { fill: var(--cat-logement); stroke: var(--cat-logement); }
+  .cat-transport { fill: var(--cat-transport); stroke: var(--cat-transport); }
+  .cat-sante { fill: var(--cat-sante); stroke: var(--cat-sante); }
+  .cat-shopping { fill: var(--cat-shopping); stroke: var(--cat-shopping); }
+  .cat-loisirs { fill: var(--cat-loisirs); stroke: var(--cat-loisirs); }
+  .cat-alimentation { fill: var(--cat-alimentation); stroke: var(--cat-alimentation); }
+  .cat-autres { fill: var(--cat-autres); stroke: var(--cat-autres); }
+
+  .bar-track { fill: var(--gridline); }
+  .bar-label { font-size: 11px; fill: var(--ink-secondary); }
+  .bar-amount { font-size: 11px; fill: var(--ink-primary); font-weight: 600; }
+
+  .line-positive { stroke: var(--accent); fill: var(--accent); }
+  .line-negative { stroke: var(--expense); fill: var(--expense); }
+  .line-stroke-positive { stroke: var(--accent); fill: none; }
+  .line-stroke-negative { stroke: var(--expense); fill: none; }
+  .area-positive { fill: var(--accent); }
+  .area-negative { fill: var(--expense); }
+  .zero-line { stroke: var(--baseline); stroke-dasharray: 3 3; }
+  .grid-line { stroke: var(--gridline); }
+  .hover-target { fill: transparent; cursor: crosshair; }
+  .crosshair { stroke: var(--ink-muted); stroke-dasharray: 2 2; opacity: 0; }
+  .hover-dot { opacity: 0; }
+
+  .donut-slice { stroke: var(--surface); stroke-width: 2; transition: opacity 0.15s ease; }
+  .donut-slice:hover, .donut-slice.hovered { opacity: 0.82; }
+  .donut-center-value { font-family: var(--font-mono); font-weight: 700; font-size: 20px; fill: var(--ink-primary); }
+  .donut-center-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; fill: var(--ink-muted); text-transform: uppercase; }
+  .donut-pct-label {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700; fill: #fff;
+    text-anchor: middle; pointer-events: none;
+    paint-order: stroke; stroke: rgba(0, 0, 0, 0.55); stroke-width: 3px; stroke-linejoin: round;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-secondary); }
+  .legend-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+  .legend-amount { font-family: var(--font-mono); color: var(--ink-muted); }
+
+  .chart-tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--ink-primary);
+    color: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--shadow);
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.1s ease;
+    z-index: 50;
+    white-space: nowrap;
+  }
+  .chart-tooltip.visible { opacity: 1; }
+  .chart-tooltip b { color: inherit; }
+
+  /* ---------- Ledger ---------- */
+  .ledger { display: flex; flex-direction: column; gap: 16px; }
+  .entry-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr 1.6fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    box-shadow: 0 1px 2px var(--shadow);
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .field input, .field select {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 2px;
+    min-width: 0;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 5px;
+  }
+  .field input[type="number"] { font-family: var(--font-mono); }
+  .submit-btn {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+    border-radius: 7px;
+    padding: 9px 18px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .submit-btn:hover { background: var(--btn-bg-hover); }
+
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    box-shadow: 0 1px 2px var(--shadow);
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th.num { text-align: right; }
+  tbody td {
+    padding: 11px 16px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr:nth-child(even) { background: var(--surface-alt); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tr[data-type="income"] td.num { color: var(--income-text); }
+  tr[data-type="expense"] td.num { color: var(--expense-text); }
+  td.cat-cell { display: flex; align-items: center; gap: 7px; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .row-delete {
+    border: none;
+    background: transparent;
+    color: var(--ink-muted);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 5px;
+  }
+  .row-delete:hover { color: var(--expense-text); background: var(--surface-alt); }
+  .empty-row td {
+    text-align: center;
+    color: var(--ink-muted);
+    font-style: italic;
+    padding: 28px 16px;
+  }
+
+  @media (max-width: 760px) {
+    .charts { grid-template-columns: 1fr; }
+    .entry-form { grid-template-columns: 1fr 1fr; }
+    .entry-form .submit-btn { grid-column: 1 / -1; }
+    .stats { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">Suivi personnel</p>
+    <h1 class="title">Grand Livre</h1>
+    <p class="tagline">Vos revenus et dépenses, tenus à jour comme un vrai registre comptable — l'encre rouge pour ce qui sort, la noire pour ce qui rentre.</p>
+  </header>
+
+  <section class="stats" aria-label="Résumé">
+    <div class="stat-tile" data-role="income">
+      <span class="stat-label">Revenus</span>
+      <span class="stat-value" id="statIncome">0,00 €</span>
+      <span class="stat-caption" id="statIncomeCaption">Toutes périodes</span>
+    </div>
+    <div class="stat-tile" data-role="expense">
+      <span class="stat-label">Dépenses</span>
+      <span class="stat-value" id="statExpense">0,00 €</span>
+      <span class="stat-caption" id="statExpenseCaption">Toutes périodes</span>
+    </div>
+    <div class="stat-tile" data-role="balance">
+      <span class="stat-label">Solde total</span>
+      <span class="stat-value" id="statBalance">0,00 €</span>
+      <span class="stat-caption">Historique complet</span>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="period-filter" role="group" aria-label="Période d'analyse">
+      <button type="button" data-period="all" class="active">Tout</button>
+      <button type="button" data-period="month">Ce mois-ci</button>
+      <button type="button" data-period="3m">3 derniers mois</button>
+    </div>
+    <p class="note">Le solde reflète toujours l'historique complet.</p>
+  </section>
+
+  <section class="charts">
+    <div class="chart-card chart-line">
+      <h2>Évolution du solde</h2>
+      <p class="chart-sub">Cumul des écritures, du jour le plus ancien à aujourd'hui</p>
+      <div id="lineChart"></div>
+    </div>
+    <div class="chart-card chart-bar">
+      <h2>Dépenses par catégorie</h2>
+      <p class="chart-sub" id="barSub">Toutes périodes</p>
+      <div id="barChart"></div>
+    </div>
+    <div class="chart-card chart-donut">
+      <h2>Répartition des dépenses</h2>
+      <p class="chart-sub" id="donutSub">Toutes périodes</p>
+      <div id="donutChart"></div>
+    </div>
+  </section>
+
+  <section class="ledger">
+    <h2>Registre</h2>
+    <form class="entry-form" id="entryForm">
+      <div class="field">
+        <label for="fType">Type</label>
+        <select id="fType">
+          <option value="expense">Dépense</option>
+          <option value="income">Revenu</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fCategory">Catégorie</label>
+        <select id="fCategory"></select>
+      </div>
+      <div class="field">
+        <label for="fDate">Date</label>
+        <input type="date" id="fDate" required />
+      </div>
+      <div class="field">
+        <label for="fDescription">Libellé</label>
+        <input type="text" id="fDescription" placeholder="Ex. Courses Carrefour" maxlength="60" />
+      </div>
+      <div class="field">
+        <label for="fAmount">Montant (€)</label>
+        <input type="number" id="fAmount" min="0.01" step="0.01" placeholder="0,00" required />
+      </div>
+      <button type="submit" class="submit-btn">Ajouter</button>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Catégorie</th>
+            <th>Libellé</th>
+            <th class="num">Montant</th>
+            <th aria-label="Actions"></th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="chart-tooltip" id="tooltip" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "grandLivre.transactions.v1";
+
+  var EXPENSE_CATEGORIES = [
+    { key: "logement", label: "Logement" },
+    { key: "transport", label: "Transport" },
+    { key: "sante", label: "Santé" },
+    { key: "shopping", label: "Shopping" },
+    { key: "loisirs", label: "Loisirs & sorties" },
+    { key: "alimentation", label: "Alimentation" },
+    { key: "autres", label: "Autres" }
+  ];
+  var INCOME_CATEGORIES = [
+    { key: "salaire", label: "Salaire" },
+    { key: "freelance", label: "Freelance" },
+    { key: "autres-revenus", label: "Autres revenus" }
+  ];
+  var ALL_CATEGORIES = EXPENSE_CATEGORIES.concat(INCOME_CATEGORIES);
+
+  function catLabel(key) {
+    var found = ALL_CATEGORIES.filter(function (c) { return c.key === key; })[0];
+    return found ? found.label : key;
+  }
+  function catClass(key) {
+    return EXPENSE_CATEGORIES.some(function (c) { return c.key === key; }) ? "cat-" + key : "cat-autres";
+  }
+
+  var fmtEUR = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+  var fmtDate = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  var fmtDateLong = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+  function uid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function save(list) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  var currentPeriod = "all";
+  var tooltipEl = document.getElementById("tooltip");
+
+  function showTooltip(clientX, clientY, html) {
+    tooltipEl.innerHTML = html;
+    tooltipEl.style.left = clientX + "px";
+    tooltipEl.style.top = (clientY - 12) + "px";
+    tooltipEl.classList.add("visible");
+  }
+  function hideTooltip() { tooltipEl.classList.remove("visible"); }
+
+  function periodRange(period) {
+    var now = new Date();
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    var start;
+    if (period === "month") {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (period === "3m") {
+      start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    } else {
+      start = null;
+    }
+    return { start: start, end: end };
+  }
+  function inPeriod(tx, period) {
+    if (period === "all") return true;
+    var range = periodRange(period);
+    var d = new Date(tx.date + "T12:00:00");
+    return d >= range.start && d <= range.end;
+  }
+
+  function sortByDate(list) {
+    return list.slice().sort(function (a, b) {
+      if (a.date === b.date) return a.id < b.id ? -1 : 1;
+      return a.date < b.date ? -1 : 1;
+    });
+  }
+
+  function render() {
+    var all = load();
+    var sorted = sortByDate(all);
+    renderStats(sorted);
+    renderTable(sorted);
+    renderLineChart(sorted);
+
+    var periodTxs = all.filter(function (tx) { return inPeriod(tx, currentPeriod); });
+    var expenseTotals = categoryTotals(periodTxs, "expense");
+    var subtitle = currentPeriod === "all" ? "Toutes périodes" : currentPeriod === "month" ? "Ce mois-ci" : "3 derniers mois";
+    document.getElementById("barSub").textContent = subtitle;
+    document.getElementById("donutSub").textContent = subtitle;
+    renderBarChart(expenseTotals);
+    renderDonutChart(expenseTotals);
+  }
+
+  function categoryTotals(list, type) {
+    var totals = {};
+    list.forEach(function (tx) {
+      if (tx.type !== type) return;
+      totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+    });
+    return EXPENSE_CATEGORIES
+      .map(function (c) { return { key: c.key, label: c.label, amount: totals[c.key] || 0 }; })
+      .filter(function (c) { return c.amount > 0; })
+      .sort(function (a, b) { return b.amount - a.amount; });
+  }
+
+  function renderStats(sorted) {
+    var periodTxs = sorted.filter(function (tx) { return inPeriod(tx, currentPeriod); });
+    var income = sum(periodTxs, "income");
+    var expense = sum(periodTxs, "expense");
+    var totalIncome = sum(sorted, "income");
+    var totalExpense = sum(sorted, "expense");
+    var balance = totalIncome - totalExpense;
+
+    document.getElementById("statIncome").textContent = fmtEUR.format(income);
+    document.getElementById("statExpense").textContent = fmtEUR.format(expense);
+    var balanceEl = document.getElementById("statBalance");
+    balanceEl.textContent = fmtEUR.format(balance);
+    balanceEl.classList.toggle("positive", balance >= 0);
+    balanceEl.classList.toggle("negative", balance < 0);
+
+    var caption = currentPeriod === "all" ? "Toutes périodes" : currentPeriod === "month" ? "Ce mois-ci" : "3 derniers mois";
+    document.getElementById("statIncomeCaption").textContent = caption;
+    document.getElementById("statExpenseCaption").textContent = caption;
+  }
+  function sum(list, type) {
+    return list.reduce(function (acc, tx) { return tx.type === type ? acc + tx.amount : acc; }, 0);
+  }
+
+  function renderTable(sorted) {
+    var body = document.getElementById("ledgerBody");
+    body.innerHTML = "";
+    if (sorted.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">Aucune écriture pour le moment. Ajoutez la première ci-dessus.</td></tr>';
+      return;
+    }
+    var reversed = sorted.slice().reverse();
+    reversed.forEach(function (tx) {
+      var tr = document.createElement("tr");
+      tr.setAttribute("data-type", tx.type);
+      var sign = tx.type === "income" ? "+ " : "− ";
+      var desc = tx.description && tx.description.trim() ? tx.description : catLabel(tx.category);
+      tr.innerHTML =
+        "<td>" + fmtDate.format(new Date(tx.date + "T12:00:00")) + "</td>" +
+        '<td class="cat-cell"><span class="cat-dot" style="background:var(--' + catClass(tx.category) + ')"></span>' + catLabel(tx.category) + "</td>" +
+        "<td>" + escapeHtml(desc) + "</td>" +
+        '<td class="num">' + sign + fmtEUR.format(tx.amount) + "</td>" +
+        '<td><button type="button" class="row-delete" data-id="' + tx.id + '" aria-label="Supprimer cette écriture">×</button></td>';
+      body.appendChild(tr);
+    });
+  }
+  function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  /* ---------------- Line chart: cumulative balance ---------------- */
+  function renderLineChart(sorted) {
+    var host = document.getElementById("lineChart");
+    if (sorted.length === 0) {
+      host.innerHTML = '<p class="chart-empty">Pas encore de données. Ajoutez une écriture pour voir la courbe.</p>';
+      return;
+    }
+    var running = 0;
+    var points = sorted.map(function (tx) {
+      running += tx.type === "income" ? tx.amount : -tx.amount;
+      return { date: tx.date, balance: running };
+    });
+
+    var W = 640, H = 240, padL = 56, padR = 16, padT = 16, padB = 28;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+
+    var times = points.map(function (p) { return new Date(p.date + "T12:00:00").getTime(); });
+    var minT = Math.min.apply(null, times), maxT = Math.max.apply(null, times);
+    var balances = points.map(function (p) { return p.balance; });
+    var minB = Math.min(0, Math.min.apply(null, balances));
+    var maxB = Math.max(0, Math.max.apply(null, balances));
+    if (minB === maxB) { minB -= 1; maxB += 1; }
+    var pad = (maxB - minB) * 0.1;
+    minB -= pad; maxB += pad;
+
+    function xOf(t) { return maxT === minT ? padL + innerW / 2 : padL + ((t - minT) / (maxT - minT)) * innerW; }
+    function yOf(b) { return padT + innerH - ((b - minB) / (maxB - minB)) * innerH; }
+    var y0 = yOf(0);
+
+    var coords = points.map(function (p, i) { return { x: xOf(times[i]), y: yOf(p.balance), balance: p.balance, date: p.date }; });
+
+    var linePath = coords.map(function (c, i) { return (i === 0 ? "M" : "L") + c.x.toFixed(1) + "," + c.y.toFixed(1); }).join(" ");
+    var areaPath = linePath +
+      " L" + coords[coords.length - 1].x.toFixed(1) + "," + y0.toFixed(1) +
+      " L" + coords[0].x.toFixed(1) + "," + y0.toFixed(1) + " Z";
+
+    var gridSteps = 3;
+    var gridLines = "";
+    for (var g = 0; g <= gridSteps; g++) {
+      var val = minB + ((maxB - minB) * g) / gridSteps;
+      var gy = yOf(val);
+      gridLines += '<line class="grid-line" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" stroke-width="1" />';
+      gridLines += '<text class="axis-label" x="' + (padL - 8) + '" y="' + (gy + 3).toFixed(1) + '" text-anchor="end" font-size="10">' + fmtEUR.format(val).replace(/\s?€/, "") + "</text>";
+    }
+
+    var last = coords[coords.length - 1];
+    var endClass = last.balance >= 0 ? "line-positive" : "line-negative";
+
+    var svg =
+      '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Évolution du solde cumulé">' +
+      gridLines +
+      '<line class="zero-line" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '" stroke-width="1" />' +
+      '<clipPath id="clipAbove"><rect x="0" y="0" width="' + W + '" height="' + y0.toFixed(1) + '" /></clipPath>' +
+      '<clipPath id="clipBelow"><rect x="0" y="' + y0.toFixed(1) + '" width="' + W + '" height="' + (H - y0) + '" /></clipPath>' +
+      '<path class="area-positive" d="' + areaPath + '" fill-opacity="0.14" stroke="none" clip-path="url(#clipAbove)" />' +
+      '<path class="area-negative" d="' + areaPath + '" fill-opacity="0.14" stroke="none" clip-path="url(#clipBelow)" />' +
+      '<path class="line-stroke-positive" d="' + linePath + '" stroke-width="2" clip-path="url(#clipAbove)" />' +
+      '<path class="line-stroke-negative" d="' + linePath + '" stroke-width="2" clip-path="url(#clipBelow)" />' +
+      '<circle class="' + endClass + '" cx="' + last.x.toFixed(1) + '" cy="' + last.y.toFixed(1) + '" r="4" />' +
+      '<line class="crosshair" id="lineCrosshair" y1="' + padT + '" y2="' + (H - padB) + '" />' +
+      '<circle class="hover-dot" id="lineHoverDot" r="4" fill="' + "var(--ink-primary)" + '" />' +
+      '<rect class="hover-target" id="lineHoverTarget" x="' + padL + '" y="' + padT + '" width="' + innerW + '" height="' + innerH + '" />' +
+      "</svg>";
+    host.innerHTML = svg;
+
+    var svgEl = host.querySelector("svg");
+    var crosshair = document.getElementById("lineCrosshair");
+    var hoverDot = document.getElementById("lineHoverDot");
+    var target = document.getElementById("lineHoverTarget");
+
+    target.addEventListener("mousemove", function (evt) {
+      var pt = toSvgPoint(svgEl, evt.clientX, evt.clientY);
+      var nearest = coords[0], best = Infinity;
+      coords.forEach(function (c) {
+        var d = Math.abs(c.x - pt.x);
+        if (d < best) { best = d; nearest = c; }
+      });
+      crosshair.setAttribute("x1", nearest.x.toFixed(1));
+      crosshair.setAttribute("x2", nearest.x.toFixed(1));
+      crosshair.style.opacity = 1;
+      hoverDot.setAttribute("cx", nearest.x.toFixed(1));
+      hoverDot.setAttribute("cy", nearest.y.toFixed(1));
+      hoverDot.style.opacity = 1;
+      showTooltip(evt.clientX, evt.clientY, "<b>" + fmtEUR.format(nearest.balance) + "</b><br>" + fmtDateLong.format(new Date(nearest.date + "T12:00:00")));
+    });
+    target.addEventListener("mouseleave", function () {
+      crosshair.style.opacity = 0;
+      hoverDot.style.opacity = 0;
+      hideTooltip();
+    });
+  }
+
+  function toSvgPoint(svg, clientX, clientY) {
+    var pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    var ctm = svg.getScreenCTM();
+    return ctm ? pt.matrixTransform(ctm.inverse()) : { x: 0, y: 0 };
+  }
+
+  /* ---------------- Bar chart: expenses by category ---------------- */
+  function renderBarChart(totals) {
+    var host = document.getElementById("barChart");
+    if (totals.length === 0) {
+      host.innerHTML = '<p class="chart-empty">Aucune dépense sur cette période.</p>';
+      return;
+    }
+    var W = 300, rowH = 34, padTop = 4;
+    var H = padTop * 2 + rowH * totals.length;
+    var labelW = 96, amountW = 64, gap = 8;
+    var trackX = labelW + gap, trackW = W - labelW - amountW - gap * 2;
+    var max = Math.max.apply(null, totals.map(function (t) { return t.amount; }));
+
+    var rows = totals.map(function (t, i) {
+      var y = padTop + i * rowH + rowH / 2;
+      var w = Math.max(4, (t.amount / max) * trackW);
+      var cls = catClass(t.key);
+      return (
+        '<text class="bar-label" x="0" y="' + (y + 3.5) + '">' + truncate(t.label, 14) + "</text>" +
+        '<rect class="bar-track" x="' + trackX + '" y="' + (y - 5) + '" width="' + trackW + '" height="10" rx="5" />' +
+        '<rect class="' + cls + ' bar-fill" data-idx="' + i + '" x="' + trackX + '" y="' + (y - 5) + '" width="' + w.toFixed(1) + '" height="10" rx="5" style="cursor:pointer" />' +
+        '<text class="bar-amount" x="' + (trackX + trackW + gap) + '" y="' + (y + 3.5) + '">' + fmtEUR.format(t.amount).replace(/\s?€/, "") + "</text>"
+      );
+    }).join("");
+
+    host.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Dépenses par catégorie">' + rows + "</svg>";
+
+    var total = totals.reduce(function (a, t) { return a + t.amount; }, 0);
+    host.querySelectorAll(".bar-fill").forEach(function (el) {
+      var idx = +el.getAttribute("data-idx");
+      var t = totals[idx];
+      el.addEventListener("mousemove", function (evt) {
+        var pct = ((t.amount / total) * 100).toFixed(0);
+        showTooltip(evt.clientX, evt.clientY, "<b>" + t.label + "</b><br>" + fmtEUR.format(t.amount) + " · " + pct + "%");
+      });
+      el.addEventListener("mouseleave", hideTooltip);
+    });
+  }
+  function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+  /* ---------------- Donut chart: expense share ---------------- */
+  function renderDonutChart(totals) {
+    var host = document.getElementById("donutChart");
+    if (totals.length === 0) {
+      host.innerHTML = '<p class="chart-empty">Aucune dépense sur cette période.</p>';
+      var legendEmpty = document.querySelector("#donutChart + .legend");
+      if (legendEmpty) legendEmpty.remove();
+      return;
+    }
+    var total = totals.reduce(function (a, t) { return a + t.amount; }, 0);
+    var cx = 100, cy = 100, rOuter = 78, rInner = 46;
+    var angle = -Math.PI / 2;
+    var slices = "";
+    var labels = "";
+
+    totals.forEach(function (t, i) {
+      var frac = t.amount / total;
+      var sweep = frac * Math.PI * 2;
+      var a0 = angle, a1 = angle + sweep;
+      var large = sweep > Math.PI ? 1 : 0;
+      var x0 = cx + rOuter * Math.cos(a0), y0 = cy + rOuter * Math.sin(a0);
+      var x1 = cx + rOuter * Math.cos(a1), y1 = cy + rOuter * Math.sin(a1);
+      var xi0 = cx + rInner * Math.cos(a1), yi0 = cy + rInner * Math.sin(a1);
+      var xi1 = cx + rInner * Math.cos(a0), yi1 = cy + rInner * Math.sin(a0);
+      var d = "M" + x0.toFixed(2) + "," + y0.toFixed(2) +
+        " A" + rOuter + "," + rOuter + " 0 " + large + " 1 " + x1.toFixed(2) + "," + y1.toFixed(2) +
+        " L" + xi0.toFixed(2) + "," + yi0.toFixed(2) +
+        " A" + rInner + "," + rInner + " 0 " + large + " 0 " + xi1.toFixed(2) + "," + yi1.toFixed(2) + " Z";
+      slices += '<path class="donut-slice ' + catClass(t.key) + '" data-idx="' + i + '" d="' + d + '" />';
+
+      if (i < 4 && frac >= 0.08) {
+        var mid = (a0 + a1) / 2, rLabel = (rOuter + rInner) / 2;
+        var lx = cx + rLabel * Math.cos(mid), ly = cy + rLabel * Math.sin(mid);
+        labels += '<text class="donut-pct-label" x="' + lx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '">' + Math.round(frac * 100) + "%</text>";
+      }
+      angle = a1;
+    });
+
+    var svg =
+      '<svg viewBox="0 0 200 200" role="img" aria-label="Répartition des dépenses par catégorie">' +
+      slices + labels +
+      '<text class="donut-center-value" x="100" y="97" text-anchor="middle">' + fmtEUR.format(total).replace(/\s?€/, "") + "</text>" +
+      '<text class="donut-center-label" x="100" y="113" text-anchor="middle">Total €</text>' +
+      "</svg>";
+
+    var legendHtml = '<div class="legend">' + totals.map(function (t) {
+      return '<span class="legend-item"><span class="legend-swatch" style="background:var(--' + catClass(t.key) + ')"></span>' +
+        t.label + ' <span class="legend-amount">' + fmtEUR.format(t.amount) + "</span></span>";
+    }).join("") + "</div>";
+
+    host.innerHTML = svg;
+    var existingLegend = host.parentElement.querySelector(".legend");
+    if (existingLegend) existingLegend.remove();
+    host.insertAdjacentHTML("afterend", legendHtml);
+
+    host.querySelectorAll(".donut-slice").forEach(function (el) {
+      var idx = +el.getAttribute("data-idx");
+      var t = totals[idx];
+      el.addEventListener("mousemove", function (evt) {
+        var pct = ((t.amount / total) * 100).toFixed(0);
+        showTooltip(evt.clientX, evt.clientY, "<b>" + t.label + "</b><br>" + fmtEUR.format(t.amount) + " · " + pct + "%");
+      });
+      el.addEventListener("mouseleave", hideTooltip);
+    });
+  }
+
+  /* ---------------- Form wiring ---------------- */
+  var typeSelect = document.getElementById("fType");
+  var categorySelect = document.getElementById("fCategory");
+  var dateInput = document.getElementById("fDate");
+
+  function populateCategories() {
+    var list = typeSelect.value === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+    categorySelect.innerHTML = list.map(function (c) { return '<option value="' + c.key + '">' + c.label + "</option>"; }).join("");
+  }
+  typeSelect.addEventListener("change", populateCategories);
+  populateCategories();
+  dateInput.value = new Date().toISOString().slice(0, 10);
+
+  document.getElementById("entryForm").addEventListener("submit", function (evt) {
+    evt.preventDefault();
+    var amount = parseFloat(document.getElementById("fAmount").value);
+    if (!amount || amount <= 0 || !dateInput.value) return;
+    var list = load();
+    list.push({
+      id: uid(),
+      type: typeSelect.value,
+      category: categorySelect.value,
+      date: dateInput.value,
+      description: document.getElementById("fDescription").value.trim(),
+      amount: Math.round(amount * 100) / 100
+    });
+    save(list);
+    document.getElementById("fDescription").value = "";
+    document.getElementById("fAmount").value = "";
+    render();
+  });
+
+  document.getElementById("ledgerBody").addEventListener("click", function (evt) {
+    var btn = evt.target.closest(".row-delete");
+    if (!btn) return;
+    var id = btn.getAttribute("data-id");
+    var list = load().filter(function (tx) { return tx.id !== id; });
+    save(list);
+    render();
+  });
+
+  document.querySelectorAll(".period-filter button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".period-filter button").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      currentPeriod = btn.getAttribute("data-period");
+      render();
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
